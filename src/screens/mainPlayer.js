@@ -2,10 +2,10 @@ import React, { Component } from "react";
 import { observer } from "mobx-react";
 import TrackPlayer, { ProgressComponent } from "react-native-track-player";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import Toast, { DURATION } from "react-native-easy-toast";
 
 import Player from "../components/Player";
 import playlistData from "../data/playlist.json";
-import localTrack from "../resources/pure.m4a";
 
 import PlayerStore from "../stores/Player";
 
@@ -24,28 +24,26 @@ export default class LandingScreen extends Component {
         TrackPlayer.CAPABILITY_PAUSE,
         TrackPlayer.CAPABILITY_SKIP_TO_NEXT,
         TrackPlayer.CAPABILITY_SKIP_TO_PREVIOUS,
-        TrackPlayer.CAPABILITY_STOP
+        TrackPlayer.CAPABILITY_STOP,
+        TrackPlayer.CAPABILITY_SKIP
       ],
       compactCapabilities: [
         TrackPlayer.CAPABILITY_PLAY,
         TrackPlayer.CAPABILITY_PAUSE
       ]
     });
+    this.initPlayBack();
   }
+
+  initPlayBack = async () => {
+    await TrackPlayer.reset();
+    await TrackPlayer.add(playlistData);
+    await TrackPlayer.play();
+  };
 
   togglePlayback = async () => {
     const currentTrack = await TrackPlayer.getCurrentTrack();
     if (currentTrack == null) {
-      await TrackPlayer.reset();
-      await TrackPlayer.add(playlistData);
-      await TrackPlayer.add({
-        id: "local-track",
-        url: localTrack,
-        title: "Pure (Demo)",
-        artist: "David Chavez111",
-        artwork: "https://picsum.photos/200"
-      });
-      await TrackPlayer.play();
     } else {
       if (PlayerStore.playbackState === TrackPlayer.STATE_PAUSED) {
         await TrackPlayer.play();
@@ -57,13 +55,37 @@ export default class LandingScreen extends Component {
 
   skipToNext = async () => {
     try {
-      await TrackPlayer.skipToNext();
-    } catch (_) {}
+      await TrackPlayer.pause();
+      //await TrackPlayer.skipToNext();
+    } catch (_) {
+      this.refs.toast.show("This is the last!");
+      await TrackPlayer.play();
+    }
   };
 
   skipToPrevious = async () => {
     try {
+      await TrackPlayer.pause();
       await TrackPlayer.skipToPrevious();
+    } catch (_) {
+      this.refs.toast.show("This is the first!");
+      await TrackPlayer.play();
+    }
+  };
+
+  randomPlay = async () => {
+    try {
+      if (PlayerStore.playType === 2) {
+        PlayerStore.playType = 1;
+      } else PlayerStore.playType = 2;
+    } catch (_) {}
+  };
+
+  repeatPlay = async () => {
+    try {
+      if (PlayerStore.playType === 3) {
+        PlayerStore.playType = 1;
+      } else PlayerStore.playType = 3;
     } catch (_) {}
   };
 
@@ -85,20 +107,18 @@ export default class LandingScreen extends Component {
   render() {
     return (
       <View style={styles.container}>
-        <Text style={styles.description}>
-          We'll be inserting a playlist into the library loaded from
-          `playlist.json`. We'll also be using the `ProgressComponent` which
-          allows us to track playback time.
-        </Text>
         <Player
           style={styles.player}
+          onRandom={() => this.randomPlay()}
           onNext={() => this.skipToNext()}
           onPrevious={() => this.skipToPrevious()}
           onTogglePlayback={() => this.togglePlayback()}
+          onRepeat={() => this.repeatPlay()}
         />
         <Text style={styles.state}>
           {this.getStateName(PlayerStore.playbackState)}
         </Text>
+        <Toast position="bottom" positionValue={200} ref="toast" />
       </View>
     );
   }

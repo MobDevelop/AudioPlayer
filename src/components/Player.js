@@ -2,6 +2,8 @@ import PropTypes from "prop-types";
 import { observer } from "mobx-react";
 import React, { Component } from "react";
 import TrackPlayer, { ProgressComponent } from "react-native-track-player";
+import Icon from "react-native-vector-icons/dist/FontAwesome";
+
 import {
   Image,
   StyleSheet,
@@ -84,10 +86,15 @@ class MyPlayerBar extends TrackPlayer.ProgressComponent {
   }
 }
 
-function ControlButton({ title, onPress }) {
+function ControlButton({ color, title, onPress }) {
   return (
     <TouchableOpacity style={styles.controlButtonContainer} onPress={onPress}>
-      <Text style={styles.controlButtonText}>{title}</Text>
+      <Icon
+        style={styles.controlButtonText}
+        name={title}
+        size={30}
+        color={color}
+      />
     </TouchableOpacity>
   );
 }
@@ -101,6 +108,7 @@ ControlButton.propTypes = {
 export default class Player extends Component {
   static propTypes = {
     style: ViewPropTypes.style,
+    onRandom: PropTypes.func.isRequired,
     onNext: PropTypes.func.isRequired,
     onPrevious: PropTypes.func.isRequired,
     onTogglePlayback: PropTypes.func.isRequired
@@ -111,14 +119,33 @@ export default class Player extends Component {
   };
 
   render() {
-    const { style, onNext, onPrevious, onTogglePlayback } = this.props;
-    var middleButtonText = "Play";
-
+    const {
+      style,
+      onNext,
+      onPrevious,
+      onTogglePlayback,
+      onRandom,
+      onRepeat
+    } = this.props;
+    var middleButtonText = "play";
+    var randomColor = "#000";
+    var repeatColor = "#000";
+    var defaultColor = "#000";
     if (
       PlayerStore.playbackState === TrackPlayer.STATE_PLAYING ||
       PlayerStore.playbackState === TrackPlayer.STATE_BUFFERING
     ) {
-      middleButtonText = "Pause";
+      middleButtonText = "pause";
+    }
+    if (PlayerStore.playType === 2) {
+      randomColor = "#AAA";
+      repeatColor = defaultColor;
+    } else if (PlayerStore.playType === 3) {
+      repeatColor = "#AAA";
+      randomColor = defaultColor;
+    } else {
+      randomColor = defaultColor;
+      repeatColor = defaultColor;
     }
 
     return (
@@ -128,9 +155,31 @@ export default class Player extends Component {
         <Text style={styles.title}>{TrackStore.title}</Text>
         <Text style={styles.artist}>{TrackStore.artist}</Text>
         <View style={styles.controls}>
-          <ControlButton title={"<<"} onPress={onPrevious} />
-          <ControlButton title={middleButtonText} onPress={onTogglePlayback} />
-          <ControlButton title={">>"} onPress={onNext} />
+          <ControlButton
+            color={randomColor}
+            title={"random"}
+            onPress={onRandom}
+          />
+          <ControlButton
+            color={defaultColor}
+            title={"backward"}
+            onPress={onPrevious}
+          />
+          <ControlButton
+            color={defaultColor}
+            title={middleButtonText}
+            onPress={onTogglePlayback}
+          />
+          <ControlButton
+            color={defaultColor}
+            title={"forward"}
+            onPress={onNext}
+          />
+          <ControlButton
+            color={repeatColor}
+            title={"refresh"}
+            onPress={onRepeat}
+          />
         </View>
       </View>
     );
