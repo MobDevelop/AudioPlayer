@@ -42,7 +42,7 @@ export default class LandingScreen extends Component {
         id: "local-track",
         url: localTrack,
         title: "Pure (Demo)",
-        artist: "David Chavez",
+        artist: "David Chavez111",
         artwork: "https://picsum.photos/200"
       });
       await TrackPlayer.play();
